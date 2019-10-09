@@ -121,7 +121,7 @@ void __interrupt() isr(void){
     CCP2IF = 0;
     time = t1 - t0; //subtract starting time 
     
-    if(time < 200000) display(1);
+    if(time > 30000 && time < 200000) display(1);
     else if(time > 200000 && time < 400000) display(2);  
     else display(3);
     

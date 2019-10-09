@@ -1,0 +1,270 @@
+/*
+ * File:   main.c
+ * Author: cjd53
+ *
+ * Created on September 30, 2019, 1:17 PM
+ */
+
+#pragma config FOSC = XT        // Oscillator Selection bits (XT oscillator: Crystal/resonator on RA6/OSC2/CLKOUT and RA7/OSC1/CLKIN)
+#pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled and can be enabled by SWDTEN bit of the WDTCON register)
+#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
+#pragma config MCLRE = ON       // RE3/MCLR pin function select bit (RE3/MCLR pin function is MCLR)
+#pragma config CP = OFF         // Code Protection bit (Program memory code protection is disabled)
+#pragma config CPD = OFF        // Data Code Protection bit (Data memory code protection is disabled)
+#pragma config BOREN = OFF      // Brown Out Reset Selection bits (BOR disabled)
+#pragma config IESO = OFF       // Internal External Switchover bit (Internal/External Switchover mode is disabled)
+#pragma config FCMEN = OFF      // Fail-Safe Clock Monitor Enabled bit (Fail-Safe Clock Monitor is disabled)
+#pragma config LVP = OFF        // Low Voltage Programming Enable bit (RB3 pin has digital I/O, HV on MCLR must be used for programming)
+#pragma config BOR4V = BOR40V   // Brown-out Reset Selection bit (Brown-out Reset set to 4.0V)
+#pragma config WRT = OFF        // Flash Program Memory Self Write Enable bits (Write protection off)
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <xc.h>
+#include <htc.h>
+#include <pic.h>
+#include <math.h>
+#define _XTAL_FREQ 4000000
+
+//tie RB0 to RC1 and RC2
+
+
+long int time, t0, t1, time_low, t0_low;
+int display_active; 
+int index;
+int letter[5];
+
+int table[16][6] = {{0, 2, 2, 2, 2, 2},
+                    {1, 1, 2, 2, 2, 2},
+                    {2, 1, 1, 2, 2, 2},
+                    {3, 1, 1, 1, 2, 2},
+                    {4, 1, 1, 1, 1, 2},
+                    {5, 1, 1, 1, 1, 1},
+                    {6, 
+};
+
+//void display(int x){
+//    PORTAbits.RA0 = 1;
+//    switch(x){
+//        case 1: //dot
+//            PORTCbits.RC0 = 0;
+//            PORTAbits.RA2 = 0; 
+//            PORTAbits.RA3 = 0;
+//            PORTCbits.RC3 = 0;
+//            PORTCbits.RC4 = 1;
+//            PORTCbits.RC5 = 0;
+//            PORTCbits.RC6 = 0;
+//            PORTCbits.RC7 = 0;
+//            break;
+//        case 2: //dash
+//            PORTCbits.RC0 = 0;
+//            PORTAbits.RA2 = 0; 
+//            PORTAbits.RA3 = 0;
+//            PORTCbits.RC3 = 0;
+//            PORTCbits.RC4 = 0;
+//            PORTCbits.RC5 = 0;
+//            PORTCbits.RC6 = 1;
+//            PORTCbits.RC7 = 0;
+//            break;
+//        case 3: //error
+//            PORTCbits.RC0 = 1;
+//            PORTAbits.RA2 = 1; 
+//            PORTAbits.RA3 = 1;
+//            PORTCbits.RC3 = 1;
+//            PORTCbits.RC4 = 0;
+//            PORTCbits.RC5 = 0;
+//            PORTCbits.RC6 = 1;
+//            PORTCbits.RC7 = 1;
+//            break;
+//        case 4: //space
+//            PORTCbits.RC0 = 0;
+//            PORTAbits.RA2 = 1; 
+//            PORTAbits.RA3 = 0;
+//            PORTCbits.RC3 = 0;
+//            PORTCbits.RC4 = 0;
+//            PORTCbits.RC5 = 0;
+//            PORTCbits.RC6 = 0;
+//            PORTCbits.RC7 = 0;
+//            break; 
+//        case 5: //pause
+//            PORTCbits.RC0 = 0;
+//            PORTAbits.RA2 = 0; 
+//            PORTAbits.RA3 = 0;
+//            PORTCbits.RC3 = 0;
+//            PORTCbits.RC4 = 0;
+//            PORTCbits.RC5 = 0;
+//            PORTCbits.RC6 = 0;
+//            PORTCbits.RC7 = 1;
+//            break; 
+//    }
+//    __delay_ms(2000);  
+//    
+//    PORTCbits.RC0 = 0;
+//    PORTAbits.RA2 = 0; 
+//    PORTAbits.RA3 = 0;
+//    PORTCbits.RC3 = 0;
+//    PORTCbits.RC4 = 0;
+//    PORTCbits.RC5 = 0;
+//    PORTCbits.RC6 = 0;
+//    PORTCbits.RC7 = 0;
+//    PORTAbits.RA0 = 0; 
+//    TMR1IF = 0;
+//    CCP1IF = 0;
+//    CCP2IF = 0;
+//}
+
+void decode(void){
+    
+    
+    PORTAbits.RA0 = 1;
+    PORTCbits.RC0 = 0;
+    PORTAbits.RA2 = 0; 
+    PORTAbits.RA3 = 0;
+    PORTCbits.RC3 = 0;
+    PORTCbits.RC4 = 0;
+    PORTCbits.RC5 = 0;
+    PORTCbits.RC6 = 0;
+    PORTCbits.RC7 = 1;
+    __delay_ms(2000);
+    PORTCbits.RC0 = 0;
+    PORTAbits.RA2 = 0; 
+    PORTAbits.RA3 = 0;
+    PORTCbits.RC3 = 0;
+    PORTCbits.RC4 = 0;
+    PORTCbits.RC5 = 0;
+    PORTCbits.RC6 = 0;
+    PORTCbits.RC7 = 0;
+    PORTAbits.RA0 = 0; 
+    TMR1IF = 0;
+    CCP1IF = 0;
+    CCP2IF = 0;
+    index = 0;
+    for(int i = 0; i < 5; i++){
+        letter[i] = 0;
+    }
+}
+
+void main(void){
+    index = 0;
+    
+    ANSEL = 0x00; //PORTA = I/O
+    ANSELH = 0x00; //PORTB = I/O
+    TRISA = 0x00; //output
+    TRISB = 0x01; //RB0 = input
+    TRISC = 0x06; //RC1(CCP2) and RC2(CCP1) set to input
+    time = 0;
+    time_low = 0;
+    TMR1 = 0; //start timer at 0
+    TMR1IF = 0;
+    INTCON = 0xC0; //enable peripheral/global interrupt
+    T1CON = 0x01; //off, 1MHz, PS 1:1, always counts when on
+    CCP1CON = 0x05; //CCP1 = rising edge
+    CCP2CON = 0x04; //CCP2 = falling edge
+    PIE1 = 0x05; //enable CCP1IE and TMR1IE
+    PIE2 = 0x01; //enable CCP2IE
+    PIR1 = 0x00; //set CCP1IF and TMR1IF to 0
+    PIR2 = 0x00; //set CCP2IF to 0
+    
+//    //Part 2
+//    while(1){ //do nothing
+//    }
+    
+//    //Part 3
+//    while(1){
+//      t1_low = time_low + TMR1;
+//      time_low = t1_low - t0_low;
+//      if (time_low > 400000) decode(); //need to write decode function
+//    }
+    
+    while(1){
+        if (TMR1 + time_low - t0_low > 400000) decode(); //currently displays as long as there isn't an input
+    }
+}
+
+void __interrupt() isr(void){
+  if(CCP1IF == 1){ //triggered on rising edge
+    t0 = time + CCPR1; //start recording for dash/dot when signal is high
+    display_active = 0;
+    
+    t0_low = 0; //clear unused variables
+    time_low = 0;
+    
+    CCP1IF = 0;
+  }
+  if(TMR1IF == 1){ //timer overflows, add 65535 us to time
+    if(display_active == 0) time = time + 0x10000 - 1; 
+    else time_low = time_low + 0x10000 - 1;
+    TMR1IF = 0;
+  }
+  if(CCP2IF == 1){ //triggered on falling edge
+    t1 = time + CCPR2; //add current TMR1 value to time
+    time = t1 - t0; //subtract starting time 
+    if(time > 30000 && time < 200000) letter[index] = 1; //dot
+    else if(time > 200000 && time < 400000) letter[index] = 2; //dash
+    else letter[index] = 3; //error
+    index = index + 1;
+    
+    display_active = 1;
+    t0_low = CCPR2;
+    
+    time = 0;
+    t0 = 0;
+    t1 = 0;
+    CCP2IF = 0;
+  }
+}
+
+//Part 3
+//void __interrupt() isr(void) {
+//    if(CCP1IF == 1){ //triggered on rising edge
+//    //T1CON = 0x01; //timer on
+//    //TMR1 = 0; //start timer at 0
+//    t0 = time + CCPR1;
+//    
+//    
+//    
+//    
+//    t1_low = time_low + CCPR1; //add current TMR1 value to time
+//    CCP1IF = 0;
+//    time_low = t1_low - t0_low; //subtract starting time 
+//    
+////    if(time_low > 30000 && time_low < 400000) display(4);
+////    else if(time_low > 400000) return;  //replace return with decode function once written
+//    
+//    time_low = 0;
+//    t0_low = 0;
+//    t1_low = 0;
+//    
+//    
+//    
+//  }
+//  if(TMR1IF == 1){ //timer overflows, add 65535 us to time
+//    time = time + 0x10000 - 1;
+//    time_low = time_low + 0x10000 - 1;
+//    TMR1IF = 0;
+//  }
+//  if(CCP2IF == 1){ //triggered on falling edge
+//
+//    t0_low = time_low + CCPR2;  
+//      
+//      
+//      
+//    //T1CON = 0x00; //timer off
+//    t1 = time + CCPR2; //add current TMR1 value to time
+//    //TMR1 = 0; //start timer at 0
+//    CCP2IF = 0;
+//    time = t1 - t0; //subtract starting time 
+//    
+//    if(time > 30000 && time < 200000) display(1);
+//    else if(time > 200000 && time < 400000) display(2);  
+//    else display(3);
+//    
+//    
+//    
+//    
+//    
+//    time = 0;
+//    t0 = 0;
+//    t1 = 0;
+//  }
+//}
