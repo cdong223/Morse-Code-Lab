@@ -27,37 +27,30 @@
 #include <string.h>
 #define _XTAL_FREQ 4000000
 
-//tie RB0 to RC1 and RC2
-
-
 long int time, t0, t1, time_low, t0_low;
-int display_active; 
-int index;
-int can_display = 0;
+int display_active = 0; //conditional for TMR1 interrupt
+int count = 0; //track spaces vs. pauses
 char letter[5] = "00000";
-
+int index = 0;
 char d = 'd';
 char D = 'D';
 char e = 'e';
-
-//char table[16][5] = {"DDDDD",
-//                     "dDDDD",
-//                     "ddDDD",
-//                     "dddDD",
-//                     "ddddD",
-//                     "ddddd",
-//                     "Ddddd",
-//                     "DDddd",
-//                     "DDDdd",
-//                     "DDDDd",
-//                     "dD000",
-//                     "Dddd0",
-//                     "DdDd0",
-//                     "Ddd00",
-//                     "d0000",
-//                     "ddDd0"
-//};
-                    
+char table[16][5] = {"DDDDD",
+                    "dDDDD",
+                    "ddDDD",
+                    "dddDD",
+                    "ddddD",
+                    "ddddd",
+                    "Ddddd",
+                    "DDddd",
+                    "DDDdd",
+                    "DDDDd",
+                    "dD000",
+                    "Dddd0",
+                    "DdDd0",
+                    "Ddd00",
+                    "d0000",
+                    "ddDd0"};
 
 void display(int x){
     PORTAbits.RA0 = 1;
@@ -153,7 +146,7 @@ void display(int x){
             PORTCbits.RC7 = 1;
              break;
         case 9:
-            PORTCbits.RC0 = 1; 
+            PORTCbits.RC0 = 1;
             PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 1;
             PORTCbits.RC3 = 1;
@@ -161,10 +154,10 @@ void display(int x){
             PORTCbits.RC5 = 1;
             PORTCbits.RC6 = 0;
             PORTCbits.RC7 = 0;
-             break; 
+             break;
         case 10: //A
             PORTCbits.RC0 = 1;
-            PORTAbits.RA2 = 1; 
+            PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 1;
             PORTCbits.RC3 = 1;
             PORTCbits.RC4 = 0;
@@ -174,17 +167,17 @@ void display(int x){
             break;
         case 11: //B
             PORTCbits.RC0 = 1;
-            PORTAbits.RA2 = 1; 
+            PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 0;
             PORTCbits.RC3 = 0;
             PORTCbits.RC4 = 0;
             PORTCbits.RC5 = 1;
             PORTCbits.RC6 = 1;
             PORTCbits.RC7 = 1;
-            break; 
+            break;
         case 12: //C
             PORTCbits.RC0 = 0;
-            PORTAbits.RA2 = 1; 
+            PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 1;
             PORTCbits.RC3 = 0;
             PORTCbits.RC4 = 0;
@@ -194,7 +187,7 @@ void display(int x){
             break;
         case 13: //D
             PORTCbits.RC0 = 1;
-            PORTAbits.RA2 = 0; 
+            PORTAbits.RA2 = 0;
             PORTAbits.RA3 = 0;
             PORTCbits.RC3 = 1;
             PORTCbits.RC4 = 0;
@@ -204,17 +197,17 @@ void display(int x){
             break;
         case 14: //E
             PORTCbits.RC0 = 1;
-            PORTAbits.RA2 = 1; 
+            PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 1;
             PORTCbits.RC3 = 0;
             PORTCbits.RC4 = 0;
             PORTCbits.RC5 = 0;
             PORTCbits.RC6 = 1;
             PORTCbits.RC7 = 1;
-            break; 
+            break;
         case 15: //F
             PORTCbits.RC0 = 1;
-            PORTAbits.RA2 = 1; 
+            PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 1;
             PORTCbits.RC3 = 0;
             PORTCbits.RC4 = 0;
@@ -224,7 +217,7 @@ void display(int x){
             break;
         case 16: //error
             PORTCbits.RC0 = 1;
-            PORTAbits.RA2 = 1; 
+            PORTAbits.RA2 = 1;
             PORTAbits.RA3 = 1;
             PORTCbits.RC3 = 1;
             PORTCbits.RC4 = 0;
@@ -233,54 +226,43 @@ void display(int x){
             PORTCbits.RC7 = 1;
             break;
     }
-    
-    __delay_ms(2000);  
-    
+    __delay_ms(2000);
     PORTCbits.RC0 = 0;
-    PORTAbits.RA2 = 0; 
+    PORTAbits.RA2 = 0;
     PORTAbits.RA3 = 0;
     PORTCbits.RC3 = 0;
     PORTCbits.RC4 = 0;
     PORTCbits.RC5 = 0;
     PORTCbits.RC6 = 0;
     PORTCbits.RC7 = 0;
-    PORTAbits.RA0 = 0; 
-//    for (int i = 0 ; i < 5 ; i++) {
-//        letter[i] = '0';
-//    }
-    strcpy(letter, "00000");
+    PORTAbits.RA0 = 0;
+    memset(letter, '0', 5);
+    index = 0;
+    count = 0;
     TMR1IF = 0;
     CCP1IF = 0;
     CCP2IF = 0;
-    index = 0;
-    can_display = 0;
 }
 
 void decode(char input[5]){
-    
-//    for (int i = 0 ; i < 16 ; i++) {
-//        for (int j = 0 ; j < 5 ; j++) {
-//            if (input[j] != table[i][j]) break;
-//            if (j == 4) {
-//                display(i);
-//                return;
-//            }
-//        } 
-//    }
-    
-    if (input[0] == d) display(14);
-    else display (16);
+   for (int i = 0 ; i < 16 ; i++) {
+       for (int j = 0 ; j < 5 ; j++) {
+           if (input[j] != table[i][j]) break;
+           if (j == 4) {
+               display(i);
+               return;
+           }
+       }
+   }
+   display(16);
 }
+
 void main(void){
-    index = 0;
-    
     ANSEL = 0x00; //PORTA = I/O
     ANSELH = 0x00; //PORTB = I/O
     TRISA = 0x00; //output
     TRISB = 0x01; //RB0 = input
     TRISC = 0x06; //RC1(CCP2) and RC2(CCP1) set to input
-    time = 0;
-    time_low = 0;
     TMR1 = 0; //start timer at 0
     TMR1IF = 0;
     INTCON = 0xC0; //enable peripheral/global interrupt
@@ -291,108 +273,41 @@ void main(void){
     PIE2 = 0x01; //enable CCP2IE
     PIR1 = 0x00; //set CCP1IF and TMR1IF to 0
     PIR2 = 0x00; //set CCP2IF to 0
-    
-//    //Part 2
-//    while(1){ //do nothing
-//    }
-    
-//    //Part 3
-//    while(1){
-//      t1_low = time_low + TMR1;
-//      time_low = t1_low - t0_low;
-//      if (time_low > 400000) decode(); //need to write decode function
-//    }
-    
+
+    time = 0;
+    time_low = 0;
+
     while(1){
-        if (((TMR1 + time_low - t0_low) > 400000) && can_display == 1) decode(letter); //currently displays as long as there isn't an input
     }
 }
 
 void __interrupt() isr(void){
   if(CCP1IF == 1){ //triggered on rising edge
-    t0 = CCPR1; //start recording for dash/dot when signal is high
+    t0 = CCPR1;
     display_active = 0;
-    can_display = 1;
-    
-    t0_low = 0; //clear unused variables
-    time_low = 0;
-    
     CCP1IF = 0;
   }
   if(TMR1IF == 1){ //timer overflows, add 65535 us to time
-    if(display_active == 0) time = time + 0x10000 - 1; 
-    else time_low = time_low + 0x10000 - 1;
+    if(display_active == 0) time = time + 0x10000 - 1;
+    else{
+      count = count + 1;
+      if(count == 8) decode(letter);
+      TMR1 = 15535; //preload with 15535 so overflow happens at t=50ms
+    }
     TMR1IF = 0;
   }
   if(CCP2IF == 1){ //triggered on falling edge
-    t1 = time + CCPR2; //add current TMR1 value to time
-    time = t1 - t0; //subtract starting time 
+    t1 = CCPR2;
+    time = time + t1 - t0;
     if(time > 30000 && time < 200000) letter[index] = d; //dot
     else if(time > 200000 && time < 400000) letter[index] = D; //dash
     else letter[index] = e; //error
     index = index + 1;
-    
-    display_active = 1;
-    t0_low = CCPR2;
-    
     time = 0;
-    t0 = 0;
-    t1 = 0;
+    //t0 = 0;
+    //t1 = 0;
+    display_active = 1;
+    TMR1 = 15535;
     CCP2IF = 0;
   }
 }
-
-//Part 3
-//void __interrupt() isr(void) {
-//    if(CCP1IF == 1){ //triggered on rising edge
-//    //T1CON = 0x01; //timer on
-//    //TMR1 = 0; //start timer at 0
-//    t0 = time + CCPR1;
-//    
-//    
-//    
-//    
-//    t1_low = time_low + CCPR1; //add current TMR1 value to time
-//    CCP1IF = 0;
-//    time_low = t1_low - t0_low; //subtract starting time 
-//    
-////    if(time_low > 30000 && time_low < 400000) display(4);
-////    else if(time_low > 400000) return;  //replace return with decode function once written
-//    
-//    time_low = 0;
-//    t0_low = 0;
-//    t1_low = 0;
-//    
-//    
-//    
-//  }
-//  if(TMR1IF == 1){ //timer overflows, add 65535 us to time
-//    time = time + 0x10000 - 1;
-//    time_low = time_low + 0x10000 - 1;
-//    TMR1IF = 0;
-//  }
-//  if(CCP2IF == 1){ //triggered on falling edge
-//
-//    t0_low = time_low + CCPR2;  
-//      
-//      
-//      
-//    //T1CON = 0x00; //timer off
-//    t1 = time + CCPR2; //add current TMR1 value to time
-//    //TMR1 = 0; //start timer at 0
-//    CCP2IF = 0;
-//    time = t1 - t0; //subtract starting time 
-//    
-//    if(time > 30000 && time < 200000) display(1);
-//    else if(time > 200000 && time < 400000) display(2);  
-//    else display(3);
-//    
-//    
-//    
-//    
-//    
-//    time = 0;
-//    t0 = 0;
-//    t1 = 0;
-//  }
-//}
