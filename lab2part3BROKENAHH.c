@@ -30,6 +30,7 @@
 long int time, t0, t1;
 int display_active = 0; //conditional for TMR1 interrupt
 int count = 0; //track spaces vs. pauses
+int decode_flag = 0;
 char letter[5] = "00000";
 int index = 0;
 char d = 'd';
@@ -40,7 +41,7 @@ char table[16][5] = {
                     "dDDDD", //1
                     "ddDDD", //2
                     "dddDD", //3
-                    "ddddD", //4
+                    "ddddD", //4 DdDde
                     "ddddd", //5 
                     "Ddddd", //6
                     "DDddd", //7
@@ -48,9 +49,9 @@ char table[16][5] = {
                     "DDDDd", //9
                     "dD000", //A
                     "Dddd0", //B
-                    "DdDd0", //C
+                    "DdDd0", //C reads edDD0
                     "Ddd00", //D
-                    "d0000", //E
+                    "d0000", //E reads D0000
                     "ddDd0"  //F
 };
 
@@ -228,7 +229,7 @@ void display(int x){
             PORTCbits.RC7 = 1;
             break;
     }
-    __delay_ms(2000);
+    __delay_ms(1000);
     PORTCbits.RC0 = 0;
     PORTAbits.RA2 = 0;
     PORTAbits.RA3 = 0;
@@ -275,6 +276,12 @@ void main(void){
     PIR2 = 0x00; //set CCP2IF to 0
 
     while(1){
+        if(decode_flag == 1){
+            decode(letter);
+            decode_flag = 0;
+            TMR1 = 0;
+            
+        }
     }
 }
 
@@ -286,26 +293,27 @@ void __interrupt() isr(void){
     CCP1IF = 0;
   }
   if(TMR1IF == 1){ //timer overflows, add 65535 us to time
-    if(display_active == 0) time = time + 0x10000 - 1;
+    if(display_active == 0) time = time + 65535;
     else{
       count = count + 1;
-      if(count == 8) decode(letter);
+      if(count == 8) decode_flag = 1;
       else TMR1 = 15535; //preload with 15535 so overflow happens at t=50ms
     }
     TMR1IF = 0;
   }
   if(CCP2IF == 1){ //triggered on falling edge
     t1 = CCPR2; 
+    TMR1 = 15535;
+    
     time = time + t1 - t0;
     if(time > 30000 && time < 200000) letter[index] = d; //dot
     else if(time > 200000 && time < 400000) letter[index] = D; //dash
     else letter[index] = e; //error
     index = index + 1;
+    
     time = 0;
-    //t0 = 0;
-    //t1 = 0;
     display_active = 1;
-    TMR1 = 15535;
+    
     CCP2IF = 0;
   }
 }
